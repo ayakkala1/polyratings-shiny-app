@@ -11,13 +11,84 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(jsonlite)
+library(tidytext)
+
 ```
 
+
+## Tidy Text Philosophy
+
+## Tokenization
+
+## N-grams
+
+## Sentiment Analysis
+
+## TF-IDF
+```{r}
+polyrating <- read_csv("polyrating.csv") %>% drop_na()
+```
+```{r}
+tokens <- polyrating %>%
+  unnest_tokens(word,review) %>%
+  select(word,everything())
+
+tokens
+```
+
+```{r}
+data(stop_words)
+
+tokens <- tokens %>%
+  anti_join(stop_words)
+```
+
+```{r}
+token_count <- tokens %>%
+  count(word, sort = TRUE)
+
+token_count
+```
+
+```{r}
+tokens %>%
+  count(word, sort = TRUE) %>%
+  filter(n > 17500) %>%
+  mutate(word = reorder(word, n )) %>%
+  ggplot(aes(word, n )) + geom_col() + xlab(NULL) + coord_flip()
+```
+
+```{r}
+get_sentiments("afinn")
+get_sentiments("bing")
+get_sentiments("nrc")
+```
+
+```{r}
+library(stringr)
+library(lubridate)
+
+nrc_joy <- get_sentiments("nrc") %>%
+  filter(sentiment == "joy")
+```
+
+```{r}
+tokens %>%
+  inner_join(nrc_joy) %>%
+  count(word, sort = TRUE)
+```
 
 
 ```{r}
-
+tokens %>%
+  mutate(date = parse_date_time(date,"%m%y")) %>%
+  inner_join(get_sentiments("bing")) %>%
+  filter(subject == "MATH") %>%
+  count(date, sentiment) %>%
+  spread(sentiment,n,fill=0) %>%
+  mutate(sentiment = positive - negative) %>%
+  ggplot(aes(date,sentiment)) + geom_col(show.legend = FALSE)
 ```
-
-
 
