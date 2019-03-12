@@ -341,7 +341,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 ## # … with 6,853,275 more rows, and 6 more variables: subject &lt;chr&gt;,
 ## #   class &lt;chr&gt;, standing &lt;chr&gt;, grade &lt;chr&gt;, reason &lt;chr&gt;, date &lt;dttm&gt;</code></pre>
 <p>You can also customize the stop words by adding your own words to the Stop Words lexicon.</p>
-<p>For a lot of the following analysis we will take advantage of customizing the stopwords lexicon. Professor names appear a lot, so we remove that. We also were curious about bigrams that involve gender so we remove certain gender words from the stopwords to include them in our analyis.</p>
+<p>For a lot of the following analysis we will take advantage of customizing the stopwords lexicon. Professor names appear a lot, so we remove that. We also were curious about tokens that involve gender so we remove certain gender words from the stopwords to include them in our analyis.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1"><span class="kw">library</span>(stringr)</a>
 <a class="sourceLine" id="cb4-2" title="2"></a>
 <a class="sourceLine" id="cb4-3" title="3">names &lt;-<span class="st"> </span>tokens <span class="op">%&gt;%</span></a>
