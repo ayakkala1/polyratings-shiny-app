@@ -2,21 +2,25 @@
 title: "Tidy Text"
 author: "Anish Yakkala, Lemar Popal, Brooke Hanna, Michal Golovanevsky"
 date: "3/7/2019"
-output: rmarkdown::html_vignette
+output: 
+  rmarkdown::html_vignette:
+    fig_width: 7
+    fig_height: 5
 vignette: >
-  %\VignetteIndexEntry{Vignette Title}
   %\VignetteEngine{knitr::rmarkdown}
-  \usepackage[utf8]{inputenc}
+  %\VignetteIndexEntry{Tidy Text}
+  %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+## What is Tidy Text?
 
-## Tidy Text Philosophy
+Tidy text is a library made with the [tidy philosophy](https://tidyverse.tidyverse.org/articles/manifesto.html) in mind. The infastructure works with packages like [dplyr](https://dplyr.tidyverse.org/), [broom](https://cran.r-project.org/web/packages/broom/vignettes/broom.html), [tidyr](https://tidyr.tidyverse.org/), and [ggplot2](https://ggplot2.tidyverse.org/reference/).
 
-
+Tidy text makes it so you can turn a corpus, a collection of written texts, into a tidy dataframe. Such that each token is a column. It also makes it easy to do various Natural Language Processes in R. 
 
 ## Tokenization
 
@@ -27,6 +31,7 @@ The data includes the Reviews, Aggregate Ratings, Subject, Classes, and many mor
 ```{r read_file, message=FALSE, warning=FALSE}
 library(tidyverse)
 library(tidytext)
+library(lubridate)
 
 polyrating <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv") %>% 
                 mutate(date = parse_date_time(date,"%m%y")) %>%
@@ -45,12 +50,23 @@ tokens
 
 You can also customize the stop words by adding your own words to the Stop Words lexicon.
 
-```{r custom_stop}
-custom_stop_words <- bind_rows(tibble(word = c("class"), 
-                                          lexicon = c("custom")), 
-                                          stop_words)
+For a lot of the following analysis we will take advantage of customizing the stopwords lexicon. Professor names appear a lot, so we remove that. We also were curious about bigrams that involve gender so we remove certain gender words from the stopwords to include them in our analyis.
 
-custom_stop_words
+```{r message=FALSE, warning=FALSE}
+library(stringr)
+
+names <- tokens %>%
+  select(prof_name) %>%
+  distinct(prof_name) %>%
+  separate(prof_name, c("last", "first"), sep = ",") %>%
+  gather() %>%
+  select(value) %>%
+  mutate(value = str_to_lower(value)) %>%
+  pull(value)
+
+custom_stop_words <-stop_words %>%
+  filter(!(word %in% c("her","she","he","his"))) %>%
+  add_row(word = names,lexicon = "SMART")
 ```
 
 Let's look at the top 5 most common words in the Polyrating Reviews.
@@ -94,15 +110,31 @@ tokens %>%
   ggtitle("Most common words in PolyRating Reviews") + guides(fill=FALSE)
 ```
 
-Here is another fun way to represent the counts of unigrams!
+### Some examples
 
-```{r wordcloud, message=FALSE}
-library(wordcloud)
+Here is a cool way to see how word use changes over time.
 
-tokens %>%
-  anti_join(stop_words) %>%
-  count(word) %>%
-  with(wordcloud(word, n, max.words = 100))
+```{r words_over_time, message=FALSE, warning=FALSE}
+year_counts <- polyrating %>%
+  unnest_tokens(word,review) %>%
+  select(word,everything()) %>%
+  count(date, word) %>%
+  complete(date, word, fill = list(n = 0)) 
+
+year_totals <- year_counts %>%
+  group_by(date) %>%
+  summarize(year_total = sum(n))
+
+year_counts %>%
+  left_join(year_totals, by = "date") %>%
+  filter(word %in% c("terrible", "he", "confusing", "she", "easy", "hard")) %>%
+  ggplot(aes(date, n / year_total)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ word, scales = "free_y") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylab("% frequency of word in review") +
+  xlab(element_blank())
 ```
 
 Let's end by comparing the Term Frequencies between Chemistry and Statistics to see which words are used a lot more in the Chemistry Reviews compared to the Statistics reviews. To start let's set up a dataframe to make term frequencies for each subject
@@ -314,10 +346,12 @@ w_{i,j} = tf_{i,j} * log(\frac{N}{df_{i}})
 \]
 
 $tf_{i,j} = $ number of occurrenes of $i$ in $j$.
+
 $df_{i} = $ number of documents containing $i$.
+
 $N = $ total number of documents
 
-```{r}
+```{r get_tf_words}
 review_tf_words <- review_words %>%
   bind_tf_idf(word, subject, n)
 
@@ -347,7 +381,7 @@ So far we have been tokenizing the corpus by individual words. However we can to
 
 Tidy Text makes this easy for us to do.
 
-```{r}
+```{r educate_gram}
 poly_bigrams <- polyrating %>%
   unnest_tokens(bigram, review, token="ngrams", n = 2) %>%
   select(bigram, everything())
@@ -357,32 +391,17 @@ poly_bigrams
 
 Similarily to what we did with unigrams let's look at the term frequencies of the PolyRating bigrams.
 
-```{r}
+```{r educate_gram_coumt}
 poly_bigrams %>%
   count(bigram, sort = TRUE)
 ```
 
 This suffers the same issues as using the term frequencies of unigrams, the existance of simple conjuctions that don't tell us much.
 
-For this analysis we will take advantage of customizing the stopwords lexicon. Professor names appear a lot, so we remove that.
-```{r message=FALSE, warning=FALSE}
-library(stringr)
 
-names <- tokens %>%
-  select(prof_name) %>%
-  distinct(prof_name) %>%
-  separate(prof_name, c("last", "first"), sep = ",") %>%
-  gather() %>%
-  select(value) %>%
-  mutate(value = str_to_lower(value)) %>%
-  pull(value)
+Now let's remove the stop words from the bigrams.
 
-custom_stop_words <-stop_words %>%
-  filter(!(word %in% c("her","she","he","his"))) %>%
-  add_row(word = names,lexicon = "SMART")
-```
-
-```{r}
+```{r educate_gram_stop}
 bigrams_separated <- poly_bigrams %>%
   separate(bigram, c("word1", "word2"), sep = " ")
 
@@ -393,57 +412,38 @@ bigrams_filtered <- bigrams_separated %>%
 bigram_counts <- bigrams_filtered %>% 
   count(word1, word2, sort = TRUE)
 
-bigram_counts
-```
-
-```{r}
 bigrams_united <- bigrams_filtered %>%
   unite(bigram, word1, word2, sep = " ")
 
 bigrams_united
 ```
 
+We can do this for trigrams as well. 
 
-```{r}
+```{r educate_tri_filter}
 trigrams_filtered <- polyrating %>%
   unnest_tokens(trigram, review, token = "ngrams", n = 3) %>%
   separate(trigram, c("word1", "word2", "word3"), sep = " ") %>%
   filter(!word1 %in%  custom_stop_words$word,
          !word2 %in% custom_stop_words$word,
-         !word3 %in% custom_stop_words$word)
+         !word3 %in% custom_stop_words$word) %>%
+  select(word1,word2,word3,everything())
 
 trigrams_filtered
 ```
 
-```{r}
-bigrams_filtered %>%
-  filter(word1 == "she" | word2 == "she") %>%
-  count(subject,word1,word2, sort = TRUE)
-```
-```{r}
-bigrams_filtered %>%
-  filter(word1 == "he" | word2 == "he") %>%
-  count(subject,word1,word2, sort = TRUE)
-```
+We can even use TF-IDF on n-grams.
 
-```{r}
-trigrams_filtered %>%
-  filter(word1 == "she" | word2 == "she"| word3 == "she") %>%
-  count(subject,word1,word2,word3, sort = TRUE)
-```
-
-```{r}
-trigrams_filtered %>%
-  filter(word1 == "he" | word2 == "he"| word3 == "he") %>%
-  count(subject,word1,word2,word3, sort = TRUE)
-```
-
-```{r}
+```{r educate_bi_senti}
 bigram_tf_idf <- bigrams_united %>%
   count(subject, bigram) %>%
   bind_tf_idf(bigram, subject, n) %>%
   arrange(desc(tf_idf))
+
+bigram_tf_idf
 ```
+
+..and then see the top tf-idf n-grams for each COSAM section.
 
 ```{r cosam_bi_graphs, message=FALSE, warning=FALSE}
 bigram_tf_idf %>%
@@ -457,34 +457,23 @@ bigram_tf_idf %>%
   labs(x = NULL, y = "tf-idf") +
   facet_wrap(~subject, ncol = 2, scales = "free") +
   coord_flip()
-
-bigram_tf_idf %>%
-  filter(subject %in% c("MATH","STAT","CHEM","PHYS","BIO","LS")) %>%
-  group_by(subject) %>% 
-  top_n(5,tf) %>% 
-  mutate(bigram = fct_reorder(bigram,n)) %>%
-  ungroup() %>%
-  ggplot(aes(bigram, tf, fill = subject)) +
-  geom_col(show.legend = FALSE) +
-  labs(x = NULL, y = "tf") +
-  facet_wrap(~subject, ncol = 2, scales = "free") +
-  coord_flip()
-
-  
-```
-```{r}
-bigrams_separated %>%
-  filter(word1 == "not") %>%
-  count(word1, word2, sort = TRUE)
 ```
 
-```{r}
+### Negation
+
+Let's examine negation using AFINN and bigrams.
+
+Let's get AFINN.
+
+```{r get_negation_AFINN}
 AFINN <- get_sentiments("afinn")
 
 AFINN
 ```
 
-```{r}
+Now let's get the "not" bigrams.
+
+```{r get_not_words}
 not_words <- bigrams_separated %>%
   filter(word1 == "not") %>%
   inner_join(AFINN, by = c(word2 = "word")) %>%
@@ -494,7 +483,9 @@ not_words <- bigrams_separated %>%
 not_words
 ```
 
-```{r}
+We can also now visualize the sentiment of these bigrams, by taking the opposite of the word following "not" and using the opposite sign.
+
+```{r graph_not_words} 
 not_words %>%
   mutate(contribution = n * score) %>%
   arrange(desc(abs(contribution))) %>%
@@ -507,56 +498,12 @@ not_words %>%
   coord_flip()
 ```
 
-```{r}
-negation_words <- c("not", "no", "without")
+## Acknowledements
 
-negated_words <- bigrams_separated %>%
-  filter(word1 %in% negation_words) %>%
-  inner_join(AFINN, by = c(word2 = "word")) %>%
-  count(word1, word2, score, sort = TRUE) %>%
-  ungroup()
-```
+Thank you to the creators of Tidy Text for making a great package! 
 
 
-```{r afinn_graph}
-negated_words %>%
-  mutate(contribution = n * score) %>%
-  arrange(desc(abs(contribution))) %>%
-  head(20) %>%
-  mutate(word2 = reorder(word2, contribution)) %>%
-  ggplot(aes(word2, -n * score, fill = n * score > 0)) +
-  geom_col(show.legend = FALSE) +
-  xlab("Words preceded by \"negation words\"") +
-  ylab("Sentiment score * number of occurrences") +
-  coord_flip() + facet_wrap(~word1,scales="free")
-```
 
-```{r}
-year_counts <- polyrating %>%
-  unnest_tokens(word,review) %>%
-  select(word,everything()) %>%
-  count(date, word) %>%
-  complete(date, word, fill = list(n = 0)) 
-  
-year_counts
-```
-
-```{r words_over_time, message=FALSE, warning=FALSE}
-year_totals <- year_counts %>%
-  group_by(date) %>%
-  summarize(year_total = sum(n))
-
-year_counts %>%
-  left_join(year_totals, by = "date") %>%
-  mutate(date = parse_date_time(date,"%m%y")) %>%
-  filter(word %in% c("terrible", "he", "confusing", "she", "easy", "hard")) %>%
-  ggplot(aes(date, n / year_total)) +
-  geom_point() +
-  geom_smooth() +
-  facet_wrap(~ word, scales = "free_y") +
-  scale_y_continuous(labels = scales::percent_format()) +
-  ylab("% frequency of word in review")
-```
 
 
 
