@@ -263,8 +263,21 @@ poly_bigrams %>%
 ```
 
 ```{r}
+library(stringr)
+
+names <- tokens %>%
+  select(prof_name) %>%
+  distinct(prof_name) %>%
+  separate(prof_name, c("last", "first"), sep = ",") %>%
+  gather() %>%
+  select(value) %>%
+  mutate(value = str_to_lower(value)) %>%
+  pull(value)
+
+
 custom_stop_words <-stop_words %>%
-  filter(!(word %in% c("her","she","he","his")))
+  filter(!(word %in% c("her","she","he","his"))) %>%
+  add_row(word = names,lexicon = "SMART")
 ```
 
 ```{r}
@@ -342,6 +355,19 @@ bigram_tf_idf %>%
   labs(x = NULL, y = "tf-idf") +
   facet_wrap(~subject, ncol = 2, scales = "free") +
   coord_flip()
+
+bigram_tf_idf %>%
+  filter(subject %in% c("MATH","STAT","CHEM","PHYS","BIO","LS")) %>%
+  group_by(subject) %>% 
+  top_n(5,tf) %>% 
+  mutate(bigram = fct_reorder(bigram,n)) %>%
+  ungroup() %>%
+  ggplot(aes(bigram, tf, fill = subject)) +
+  geom_col(show.legend = FALSE) +
+  labs(x = NULL, y = "tf") +
+  facet_wrap(~subject, ncol = 2, scales = "free") +
+  coord_flip()
+
   
 ```
 ```{r}
@@ -423,20 +449,39 @@ library(ggraph)
 ggraph(bigram_graph, layout = "fr") +
   geom_edge_link() +
   geom_node_point() +
-  geom_node_text(aes(label = name), vjust = 1, hjust = 1)
+  geom_node_text(aes(label = name), vjust = 1, hjust = 1) + xlim(0,100)
+```
+
+
+
+```{r}
+year_counts <- polyrating %>%
+  unnest_tokens(word,review) %>%
+  select(word,everything()) %>%
+  count(date, word) %>%
+  complete(date, word, fill = list(n = 0)) 
+  
+year_counts
 ```
 
 ```{r}
-set.seed(2016)
+year_totals <- year_counts %>%
+  group_by(date) %>%
+  summarize(year_total = sum(n))
 
-a <- grid::arrow(type = "closed", length = unit(.50, "inches"))
-
-ggraph(bigram_graph, layout = "fr") +
-  geom_edge_link(aes(edge_alpha = n), show.legend = FALSE,
-                 arrow = a, end_cap = circle(.07, 'inches')) +
-  geom_node_point(color = "lightblue", size = 5) +
-  geom_node_text(aes(label = name), vjust = 1, hjust = 1) +
-  theme_void()
+year_counts %>%
+  left_join(year_totals, by = "date") %>%
+  mutate(date = parse_date_time(date,"%m%y")) %>%
+  filter(word %in% c("terrible", "he", "confusing", "she", "easy", "hard")) %>%
+  ggplot(aes(date, n / year_total)) +
+  geom_point() +
+  geom_smooth() +
+  facet_wrap(~ word, scales = "free_y") +
+  scale_y_continuous(labels = scales::percent_format()) +
+  ylab("% frequency of word in review")
 ```
+
+
+
 
 
