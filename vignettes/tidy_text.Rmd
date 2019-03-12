@@ -11,8 +11,6 @@ vignette: >
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-library(tidyverse)
-library(tidytext)
 ```
 
 
@@ -22,11 +20,14 @@ library(tidytext)
 
 ## Tokenization
 
-Let's start by reading in the dataset we will be working with throughout this vignette!
+Let's start by reading in the dataset we will be working with throughout this vignette, and loading our main libraries!
 
 The data includes the Reviews, Aggregate Ratings, Subject, Classes, and many more of all the professors on http://polyratings.com.
 
 ```{r read_file, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(tidytext)
+
 polyrating <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv") %>% 
                 drop_na()
 ```
@@ -63,26 +64,57 @@ tokens <- tokens %>%
   anti_join(stop_words)
 ```
 
-```{r}
-token_count <- tokens %>%
-  count(word, sort = TRUE)
-
-token_count
+```{r stop_common_words}
+tokens %>%
+  count(word) %>%
+  arrange(desc(n)) %>%
+  top_n(5, n)
 ```
 
-```{r}
+As you can see the top 5 most common words have changed!
+
+```{r simple_freq_graph}
 tokens %>%
   count(word, sort = TRUE) %>%
   filter(n > 17500) %>%
   mutate(word = reorder(word, n )) %>%
-  ggplot(aes(word, n )) + geom_col() + xlab(NULL) + coord_flip()
+  ggplot(aes(word, n, fill = word )) + geom_col() + 
+  xlab(NULL) + coord_flip() + guides(fill=FALSE) + ylab("Term Frequency") +
+  ggtitle("Most common words in PolyRating Reviews")
 ```
 
+## Sentiment Analysis
+
+PolyRating can become quite a heated place for students. This is prime data for doing a common practice in NLP called "Sentiment Analysis". Sentiment Analysis is the process of identifying and categorizing the attitudes and opinions expressed in a corpus.
+
+Tidy Text gives us 3 datasets to conduct our own Sentiment Analysis. Each helps us tell things about the sentiment of a text, but each in very different ways.
+
+Let's take a look.
+
+### AFINN
+
 ```{r}
-get_sentiments("afinn")
+set.seed(2017)
+
+get_sentiments("afinn") %>%
+  sample_n(10)
+```
+
+AFINN scores unigrams between $(-5,5)$. As it seems, negative means a negative sentiment, positive means a positive sentiment, and zero is neutral. This is useful if you want work with sentiment as a quantitative variable. Such as using it in a scatterplot or regressor.
+
+```{r}
+set.seed(2010)
+
 get_sentiments("bing")
+```
+
+BING scores unigrams as "positive" or "negative". This is useful if you want sentiment as a Binarized variable. This makes it easy to do analysis that involves Counts & Proportions.
+
+```{r}
 get_sentiments("nrc")
 ```
+
+NRC places unigrams into various classes of which they may fall either into a positive or negative category. This may be useful if you want to classify your corpus in a more general way.
 
 ```{r message=FALSE, warning=FALSE}
 library(stringr)
@@ -92,7 +124,7 @@ nrc_joy <- get_sentiments("nrc") %>%
   filter(sentiment == "joy")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 tokens %>%
   inner_join(nrc_joy) %>%
   count(word, sort = TRUE)
@@ -110,7 +142,6 @@ tokens %>%
   facet_wrap(~subject) + ggtitle("COSAM Sentiment Over Time")
 ```
 
-## Sentiment Analysis
 
 ```{r}
 bing_word_counts <- tokens %>%
