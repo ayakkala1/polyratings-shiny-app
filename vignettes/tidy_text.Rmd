@@ -12,7 +12,6 @@ vignette: >
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
-library(jsonlite)
 library(tidytext)
 
 ```
@@ -22,12 +21,7 @@ library(tidytext)
 
 ## Tokenization
 
-## N-grams
-
-## Sentiment Analysis
-
-## TF-IDF
-```{r}
+```{r message=FALSE, warning=FALSE}
 polyrating <- read_csv("polyrating.csv") %>% drop_na()
 ```
 ```{r}
@@ -38,7 +32,7 @@ tokens <- polyrating %>%
 tokens
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 data(stop_words)
 
 tokens <- tokens %>%
@@ -66,7 +60,7 @@ get_sentiments("bing")
 get_sentiments("nrc")
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(stringr)
 library(lubridate)
 
@@ -80,8 +74,7 @@ tokens %>%
   count(word, sort = TRUE)
 ```
 
-
-```{r}
+```{r cosam_sentiment, message=FALSE}
 tokens %>%
   mutate(date = parse_date_time(date,"%m%y")) %>%
   inner_join(get_sentiments("bing")) %>%
@@ -93,6 +86,8 @@ tokens %>%
   facet_wrap(~subject) + ggtitle("COSAM Sentiment Over Time")
 ```
 
+## Sentiment Analysis
+
 ```{r}
 bing_word_counts <- tokens %>%
   inner_join(get_sentiments("bing")) %>%
@@ -101,7 +96,7 @@ bing_word_counts <- tokens %>%
 
 bing_word_counts
 ```
-```{r}
+```{r bing_comparison, message=FALSE}
 bing_word_counts %>%
   group_by(sentiment) %>%
   top_n(10) %>%
@@ -124,7 +119,7 @@ custom_stop_words <- bind_rows(tibble(word = c("class"),
 custom_stop_words
 ```
 
-```{r}
+```{r message=FALSE}
 library(wordcloud)
 
 tokens %>%
@@ -133,7 +128,7 @@ tokens %>%
   with(wordcloud(word, n, max.words = 100))
 ```
 
-```{r}
+```{r message=FALSE}
 bingnegative <- get_sentiments("bing") %>% 
   filter(sentiment == "negative")
 
@@ -154,7 +149,7 @@ tokens %>%
   arrange(desc(ratio))
 ```
 
-```{r}
+```{r message=FALSE}
 tokens %>%
   semi_join(bingpositive) %>%
   group_by(subject) %>%
@@ -165,7 +160,9 @@ tokens %>%
   arrange(desc(ratio))
 ```
 
-```{r}
+## TF-IDF
+
+```{r message=FALSE}
 review_words <- tokens %>%
   count(subject, word, sort = TRUE) %>%
   ungroup()
@@ -178,7 +175,7 @@ review_words <- left_join(review_words, total_words)
 
 review_words
 ```
-```{r}
+```{r term_freq_graph,message=FALSE, warning=FALSE}
 review_words %>%
   filter(subject %in% c("MATH","STAT","CHEM","PHYS","BIO","LS")) %>%
   ggplot(aes(n/total, fill = subject)) +
@@ -234,7 +231,7 @@ review_tf_words %>%
   arrange(desc(tf_idf))
 ```
 
-```{r}
+```{r cosam_tf_graph, message=FALSE}
 review_tf_words %>%
   arrange(desc(tf_idf)) %>%
   mutate(word = factor(word, levels = rev(unique(word)))) %>% 
@@ -249,6 +246,8 @@ review_tf_words %>%
   coord_flip()
 ```
 
+## N-grams
+
 ```{r}
 poly_bigrams <- polyrating %>%
   unnest_tokens(bigram,review,token="ngrams",n=2) %>%
@@ -262,7 +261,7 @@ poly_bigrams %>%
   count(bigram, sort = TRUE)
 ```
 
-```{r}
+```{r message=FALSE, warning=FALSE}
 library(stringr)
 
 names <- tokens %>%
@@ -343,7 +342,7 @@ bigram_tf_idf <- bigrams_united %>%
   arrange(desc(tf_idf))
 ```
 
-```{r}
+```{r cosam_bi_graphs, message=FALSE, warning=FALSE}
 bigram_tf_idf %>%
   filter(subject %in% c("MATH","STAT","CHEM","PHYS","BIO","LS")) %>%
   group_by(subject) %>% 
@@ -416,7 +415,7 @@ negated_words <- bigrams_separated %>%
 ```
 
 
-```{r}
+```{r afinn_graph}
 negated_words %>%
   mutate(contribution = n * score) %>%
   arrange(desc(abs(contribution))) %>%
@@ -430,31 +429,6 @@ negated_words %>%
 ```
 
 ```{r}
-library(igraph)
-
-bigram_counts
-```
-
-```{r}
-bigram_graph <- bigram_counts %>%
-  filter(n > 20) %>%
-  graph_from_data_frame()
-
-bigram_graph
-```
-
-```{r}
-library(ggraph)
-
-ggraph(bigram_graph, layout = "fr") +
-  geom_edge_link() +
-  geom_node_point() +
-  geom_node_text(aes(label = name), vjust = 1, hjust = 1) + xlim(0,100)
-```
-
-
-
-```{r}
 year_counts <- polyrating %>%
   unnest_tokens(word,review) %>%
   select(word,everything()) %>%
@@ -464,7 +438,7 @@ year_counts <- polyrating %>%
 year_counts
 ```
 
-```{r}
+```{r words_over_time, message=FALSE, warning=FALSE}
 year_totals <- year_counts %>%
   group_by(date) %>%
   summarize(year_total = sum(n))
