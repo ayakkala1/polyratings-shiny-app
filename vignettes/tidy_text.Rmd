@@ -1,6 +1,6 @@
 ---
 title: "Tidy Text"
-author: "Anish Yakkala"
+author: "Anish Yakkala, Lemar Popal, Brooke Hanna, Michal Golovanevsky"
 date: "3/7/2019"
 output: rmarkdown::html_vignette
 vignette: >
