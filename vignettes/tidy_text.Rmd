@@ -13,18 +13,27 @@ vignette: >
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(tidytext)
-
 ```
 
 
 ## Tidy Text Philosophy
 
+
+
 ## Tokenization
 
-```{r message=FALSE, warning=FALSE}
-polyrating <- read_csv("polyrating.csv") %>% drop_na()
+Let's start by reading in the dataset we will be working with throughout this vignette!
+
+The data includes the Reviews, Aggregate Ratings, Subject, Classes, and many more of all the professors on http://polyratings.com.
+
+```{r read_file, message=FALSE, warning=FALSE}
+polyrating <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv") %>% 
+                drop_na()
 ```
-```{r}
+
+The bread and butter of Text Analysis is tokenizing a corpus. This is to get a matrix of such that each row is a unique token of the corpus. A token can be a single word, combination of words, or even a sentence. We will be focusing right now on a single word or unigram for now.
+
+```{r tokenize}
 tokens <- polyrating %>%
   unnest_tokens(word,review) %>%
   select(word,everything())
@@ -32,7 +41,22 @@ tokens <- polyrating %>%
 tokens
 ```
 
-```{r message=FALSE, warning=FALSE}
+Let's look at the top 5 most common words in the Polyrating Reviews.
+
+```{r non_stop_freq}
+tokens %>%
+  count(word) %>%
+  arrange(desc(n)) %>%
+  top_n(5, n)
+```
+
+Not surpising. These words are often deemed "stop words" in Natural Language Processing, they take up a lot of space and don't give us very interesting information about the corpus.
+
+To remedy this we will read in the stop words and perform an anti-join on our tokens. 
+
+(Note: Anti Join simply "return all rows from x where there are not matching values in y, keeping just columns from x.")
+
+```{r stopword, message=FALSE, warning=FALSE}
 data(stop_words)
 
 tokens <- tokens %>%
