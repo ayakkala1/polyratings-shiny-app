@@ -669,9 +669,9 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <p><span class="math display">\[
 w_{i,j} = tf_{i,j} * log(\frac{N}{df_{i}})
 \]</span></p>
-<p>$tf_{i,j} = $ number of occurrenes of <span class="math inline">\(i\)</span> in <span class="math inline">\(j\)</span>.</p>
-<p>$df_{i} = $ number of documents containing <span class="math inline">\(i\)</span>.</p>
-<p>$N = $ total number of documents</p>
+<p><span class="math inline">\(tf_{i,j} =\)</span> number of occurrenes of <span class="math inline">\(i\)</span> in <span class="math inline">\(j\)</span>.</p>
+<p><span class="math inline">\(df_{i} =\)</span> number of documents containing <span class="math inline">\(i\)</span>.</p>
+<p><span class="math inline">\(N =\)</span> total number of documents</p>
 <div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb34-1" title="1">review_tf_words &lt;-<span class="st"> </span>review_words <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb34-2" title="2"><span class="st">  </span><span class="kw">bind_tf_idf</span>(word, subject, n)</a>
 <a class="sourceLine" id="cb34-3" title="3"></a>

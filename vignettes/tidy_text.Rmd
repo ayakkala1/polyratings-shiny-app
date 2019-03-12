@@ -345,11 +345,11 @@ For a term $i$ in document $j$.
 w_{i,j} = tf_{i,j} * log(\frac{N}{df_{i}})
 \]
 
-$tf_{i,j} = $ number of occurrenes of $i$ in $j$.
+$tf_{i,j} =$ number of occurrenes of $i$ in $j$.
 
-$df_{i} = $ number of documents containing $i$.
+$df_{i} =$ number of documents containing $i$.
 
-$N = $ total number of documents
+$N =$ total number of documents
 
 ```{r get_tf_words}
 review_tf_words <- review_words %>%
