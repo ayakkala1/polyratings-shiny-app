@@ -327,20 +327,20 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb2-3" title="3"><span class="st">  </span><span class="kw">select</span>(word,<span class="kw">everything</span>())</a>
 <a class="sourceLine" id="cb2-4" title="4"></a>
 <a class="sourceLine" id="cb2-5" title="5">tokens <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb2-6" title="6"><span class="st">  </span><span class="kw">select</span>(word, agg_rating, prof_name)</a></code></pre></div>
+<a class="sourceLine" id="cb2-6" title="6"><span class="st">  </span><span class="kw">select</span>(word, agg_rating, subject)</a></code></pre></div>
 <pre><code>## # A tibble: 6,853,285 x 3
-##    word        agg_rating prof_name      
-##    &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;          
-##  1 really      3.22/4.00  Abel, Christina
-##  2 interesting 3.22/4.00  Abel, Christina
-##  3 anytext     3.22/4.00  Abel, Christina
-##  4 or          3.22/4.00  Abel, Christina
-##  5 1           3.22/4.00  Abel, Christina
-##  6 1           3.22/4.00  Abel, Christina
-##  7 i           3.22/4.00  Abel, Christina
-##  8 had         3.22/4.00  Abel, Christina
-##  9 dr          3.22/4.00  Abel, Christina
-## 10 abel        3.22/4.00  Abel, Christina
+##    word        agg_rating subject
+##    &lt;chr&gt;       &lt;chr&gt;      &lt;chr&gt;  
+##  1 really      3.22/4.00  CHEM   
+##  2 interesting 3.22/4.00  CHEM   
+##  3 anytext     3.22/4.00  CHEM   
+##  4 or          3.22/4.00  CHEM   
+##  5 1           3.22/4.00  CHEM   
+##  6 1           3.22/4.00  CHEM   
+##  7 i           3.22/4.00  CHEM   
+##  8 had         3.22/4.00  CHEM   
+##  9 dr          3.22/4.00  CHEM   
+## 10 abel        3.22/4.00  CHEM   
 ## # … with 6,853,275 more rows</code></pre>
 <p>Let’s look at the top 5 most common words in the Polyrating Reviews.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb4-1" title="1">tokens <span class="op">%&gt;%</span></a>
@@ -734,21 +734,17 @@ w_{i,j} = tf_{i,j} * log(\frac{N}{df_{i}})
 <a class="sourceLine" id="cb37-3" title="3"><span class="st">  </span><span class="kw">select</span>(bigram, <span class="kw">everything</span>())</a>
 <a class="sourceLine" id="cb37-4" title="4"></a>
 <a class="sourceLine" id="cb37-5" title="5">poly_bigrams <span class="op">%&gt;%</span></a>
-<a class="sourceLine" id="cb37-6" title="6"><span class="st">  </span><span class="kw">select</span>(bigram, agg_rating, prof_name)</a></code></pre></div>
-<pre><code>## # A tibble: 6,791,065 x 3
-##    bigram       agg_rating prof_name     
-##    &lt;chr&gt;        &lt;chr&gt;      &lt;chr&gt;         
-##  1 416 with     0.00/4.00  Ramirez, Sarah
-##  2 with ramirez 0.00/4.00  Ramirez, Sarah
-##  3 ramirez is   0.00/4.00  Ramirez, Sarah
-##  4 is a         0.00/4.00  Ramirez, Sarah
-##  5 a living     0.00/4.00  Ramirez, Sarah
-##  6 living hell  0.00/4.00  Ramirez, Sarah
-##  7 hell this    0.00/4.00  Ramirez, Sarah
-##  8 this class   0.00/4.00  Ramirez, Sarah
-##  9 class under  0.00/4.00  Ramirez, Sarah
-## 10 under her    0.00/4.00  Ramirez, Sarah
-## # … with 6,791,055 more rows</code></pre>
+<a class="sourceLine" id="cb37-6" title="6"><span class="st">  </span><span class="kw">select</span>(bigram, agg_rating, subject) <span class="op">%&gt;%</span></a>
+<a class="sourceLine" id="cb37-7" title="7"><span class="st">  </span><span class="kw">tail</span>()</a></code></pre></div>
+<pre><code>## # A tibble: 6 x 3
+##   bigram     agg_rating subject
+##   &lt;chr&gt;      &lt;chr&gt;      &lt;chr&gt;  
+## 1 her for    3.01/4.00  ENGL   
+## 2 for any    3.01/4.00  ENGL   
+## 3 any class  3.01/4.00  ENGL   
+## 4 class you  3.01/4.00  ENGL   
+## 5 you can    3.01/4.00  ENGL   
+## 6 can period 3.01/4.00  ENGL</code></pre>
 <p>Similarily to what we did with unigrams let’s look at the term frequencies of the PolyRating bigrams.</p>
 <div class="sourceCode" id="cb39"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb39-1" title="1">poly_bigrams <span class="op">%&gt;%</span></a>
 <a class="sourceLine" id="cb39-2" title="2"><span class="st">  </span><span class="kw">count</span>(bigram, <span class="dt">sort =</span> <span class="ot">TRUE</span>)</a></code></pre></div>

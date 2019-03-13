@@ -48,7 +48,7 @@ tokens <- polyrating %>%
   select(word,everything())
 
 tokens %>%
-  select(word, agg_rating, prof_name)
+  select(word, agg_rating, subject)
 ```
 
 Let's look at the top 5 most common words in the Polyrating Reviews.
@@ -415,7 +415,8 @@ poly_bigrams <- polyrating %>%
   select(bigram, everything())
 
 poly_bigrams %>%
-  select(bigram, agg_rating, prof_name)
+  select(bigram, agg_rating, subject) %>%
+  tail()
 ```
 
 Similarily to what we did with unigrams let's look at the term frequencies of the PolyRating bigrams.
