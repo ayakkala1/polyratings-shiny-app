@@ -20,13 +20,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Tidy text is a library made with the [tidy philosophy](https://tidyverse.tidyverse.org/articles/manifesto.html) in mind. The infastructure works with packages like [dplyr](https://dplyr.tidyverse.org/), [broom](https://cran.r-project.org/web/packages/broom/vignettes/broom.html), [tidyr](https://tidyr.tidyverse.org/), and [ggplot2](https://ggplot2.tidyverse.org/reference/).
 
-Tidy text makes it so you can turn a corpus, a collection of written texts, into a tidy dataframe. Such that each token is a column. It also makes it easy to do various Natural Language Processes in R. 
+Tidy text makes it so you can turn a corpus, a collection of written texts, into a tidy dataframe. Such that each token is a column. It also makes it easy to do various Natural Language Processes in R.
 
 ## Tokenization
 
 Let's start by reading in the dataset we will be working with throughout this vignette, and loading our main libraries!
 
-The data includes the Reviews, Aggregate Ratings, Subject, Classes, and many more of all the professors on http://polyratings.com.
+The data we will be working with in this Vignette are the ratings of [Cal Poly SLO](https://www.calpoly.edu/) faculty written by students on http://polyratings.com. It includes the Reviews, Aggregate Ratings, Subjects, Classes, and many more of all the Professors on PolyRatings.
+
+<font size="2"> (Note: If you are interested in how this data was collected please contact [Anish Yakkala](https://users.csc.calpoly.edu/~ayakkala/index.html) for information on how the data was scraped!)</font>
 
 ```{r read_file, message=FALSE, warning=FALSE}
 library(tidyverse)

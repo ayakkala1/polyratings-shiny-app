@@ -24,11 +24,10 @@ subjects <- polyrating %>%
             pull() %>%
             unlist()
 
-token_words <- polyrating %>%
-  unnest_tokens(word, review) %>%
-  distinct(word) %>%
-  pull() %>%
-  unlist()
+token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv") #%>%
+               #filter(word == "she") %>%
+              #  pull(word) %>%
+                
 
 shinyUI(fluidPage(
   
@@ -97,7 +96,7 @@ shinyUI(fluidPage(
                                       label = "Choose words: ", 
                                       choices = c(token_words), 
                                       options = list(maxItems  = 100), 
-                                      selected = "her"),
+                                      selected = "work"),
                             actionButton("examine","Examine")),
                           br(), br(),
                           h5("Built with",
@@ -115,7 +114,32 @@ shinyUI(fluidPage(
                           plotOutput("timePlot")
                         )
                       )
+                     ),
+             tabPanel("College Sentiment",
+             sidebarLayout(
+               sidebarPanel(
+                 wellPanel(
+                   selectizeInput(
+                     'sentimentsubj', label = "Subject: ", choices = subjects,
+                     options = list(maxItems  = 4, selected = "STAT"
+                                 )
+                          ),
+                 br(), br(),
+                 h5("Built with",
+                    img(src = "https://www.rstudio.com/wp-content/uploads/2014/04/shiny.png", height = "30px"),
+                    "using", img(src = "https://raw.githubusercontent.com/juliasilge/tidytext/master/tools/tidytext.png",
+                                 height = "30px"),
+                    "on",
+                    img(src = "https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gray.png", 
+                        height = "30px"),
+                    "."),
+                 width = 4),
+               mainPanel(
+                 plotOutput("sentPlot")
+               )
+               )
+                          )
              )
-                      )
-                    )
-)
+        )
+  )
+

@@ -311,7 +311,8 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div id="tokenization" class="section level2">
 <h2>Tokenization</h2>
 <p>Let’s start by reading in the dataset we will be working with throughout this vignette, and loading our main libraries!</p>
-<p>The data includes the Reviews, Aggregate Ratings, Subject, Classes, and many more of all the professors on <a href="http://polyratings.com" class="uri">http://polyratings.com</a>.</p>
+<p>The data we will be working with in this Vignette are the ratings of <a href="https://www.calpoly.edu/">Cal Poly SLO</a> faculty written by students on <a href="http://polyratings.com" class="uri">http://polyratings.com</a>. It includes the Reviews, Aggregate Ratings, Subjects, Classes, and many more of all the Professors on PolyRatings.</p>
+<p><font size="2"> (Note: If you are interested in how this data was collected please contact <a href="https://users.csc.calpoly.edu/~ayakkala/index.html">Anish Yakkala</a> for information on how the data was scraped!)</font></p>
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" title="1"><span class="kw">library</span>(tidyverse)</a>
 <a class="sourceLine" id="cb1-2" title="2"><span class="kw">library</span>(tidytext)</a>
 <a class="sourceLine" id="cb1-3" title="3"><span class="kw">library</span>(lubridate)</a>

@@ -19,9 +19,12 @@ polyrating <- read_csv(
   mutate(date = parse_date_time(date,"%m%y")) %>%
   drop_na()
 
+token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv")
+
 data(stop_words)
 
-review_words <- tokens %>%
+review_words <- polyrating %>%
+  unnest_tokens(word,review) %>%
   count(subject, word, sort = TRUE) %>%
   ungroup()
 
@@ -143,6 +146,9 @@ shinyServer(function(input, output, session) {
   
   #------------------------------ NEW TAB -------------------------------
   
+  updateSelectizeInput(session = session, inputId = 'timeword', choices = c(token_words), server = TRUE)
+
+  
   year_counts <- reactive({
     req(input$timesubject)
     if ("ALL" %in% input$timesubject){tokens() %>%
@@ -176,6 +182,30 @@ shinyServer(function(input, output, session) {
   
   output$timePlot <- renderPlot({timeplot()})
   
+  #-------------------------------- NEW TAB ------------------------------------
   
+  subject_selected_sent <- reactive({
+    req(input$sentimentsubj)
+    filter(tokens(), subject %in% input$sentimentsubj)
+  })
+  
+  output$sentPlot <- renderPlot({
+    validate(
+      need(input$sentimentsubj != "", "Please select a subject.")
+    )
+    subject_words <- paste(input$sentimentsubj,collapse = ", ")
+    
+    subject_selected_sent() %>%
+          anti_join(stop_words) %>%
+          inner_join(get_sentiments("bing")) %>%
+          count(date, subject, sentiment) %>%
+          spread(sentiment, n, fill = 0) %>%
+          mutate(sentiment = positive - negative) %>%
+          ggplot(aes(date, sentiment,fill = subject)) + geom_col(show.legend = FALSE) +
+          facet_wrap(~subject) + ggtitle("College Sentiment Over Time") + 
+          theme(panel.spacing.x = unit(1, "lines"), 
+                plot.margin = margin(.3, .8, .3, .8, "cm")) +
+          xlab(element_blank()) + ylab("Sentiment")
+    })
   }
 )
