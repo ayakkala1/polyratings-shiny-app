@@ -31,7 +31,7 @@ total_words <- review_words %>%
 
 review_words <- left_join(review_words, total_words)
 
-# Define server logic required to draw a histogram
+
 shinyServer(function(input, output, session) {
   add_to_stop_r <- reactiveValues()
   
@@ -79,7 +79,7 @@ shinyServer(function(input, output, session) {
     )
     subject_words <- paste(input$subject,collapse = ", ")
 
-    new_filter <- replace(input$subject, input$subject =="ALL", "[\\s\\S]+")
+    new_filter <- replace(input$subject, input$subject == "ALL", "[\\s\\S]+")
 
     if (length(input$use_tf) != 0){
       if (length(input$selected_type) == 0){
@@ -143,6 +143,38 @@ shinyServer(function(input, output, session) {
   
   #------------------------------ NEW TAB -------------------------------
   
+  year_counts <- reactive({
+    req(input$timesubject)
+    if ("ALL" %in% input$timesubject){tokens() %>%
+        count(date,word) %>%
+        complete(date, word, fill = list(n = 0))
+    }else{
+      tokens() %>%
+        filter(subject %in% input$timesubject) %>%
+        count(date,word) %>%
+        complete(date, word, fill = list(n = 0))}
+  })
+  
+  year_totals <- reactive({year_counts() %>%
+                            group_by(date) %>%
+                            summarize(year_total = sum(n))})
+  
+  year_vals <- reactive({year_counts() %>%
+      left_join(year_totals(), by = "date")})
+  
+  timeplot <- eventReactive(input$examine,
+    {
+    year_vals() %>%
+        filter(word %in% input$timeword) %>%
+        ggplot(aes(date, n / year_total,fill = word, color = word)) +
+        geom_point() +
+        geom_smooth() +
+        scale_y_continuous(labels = scales::percent_format()) +
+        ylab("% frequency of word in review") +
+        xlab(element_blank())
+  })
+  
+  output$timePlot <- renderPlot({timeplot()})
   
   
   }
