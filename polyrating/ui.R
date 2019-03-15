@@ -1,12 +1,3 @@
-#
-# This is the user-interface definition of a Shiny web application. You can
-# run the application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
-
 library(shiny)
 library(tidyverse)
 library(readr)
@@ -25,8 +16,7 @@ subjects <- polyrating %>%
             unlist()
 
 token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv") #%>%
-               #filter(word == "she") %>%
-              #  pull(word) %>%
+ 
                 
 
 shinyUI(fluidPage(
@@ -133,13 +123,38 @@ shinyUI(fluidPage(
                     img(src = "https://www.rstudio.com/wp-content/uploads/2014/07/RStudio-Logo-Blue-Gray.png", 
                         height = "30px"),
                     "."),
-                 width = 4),
+                 width = 4)),
                mainPanel(
                  plotOutput("sentPlot")
                )
-               )
-                          )
+              )
+             ),
+             tabPanel("Word Cloud",
+                      titlePanel("Word Cloud of Most Frequent Words by Subject"),
+                      
+                      sidebarLayout(
+                        # Sidebar with a slider and selection inputs
+                        sidebarPanel(
+                          selectInput("selection", "Choose a Department:",
+                                      choices = subjects),
+                          actionButton("update", "Change"),
+                          hr(),
+                          sliderInput("freq",
+                                      "Minimum Frequency:",
+                                      min = 1,  max = 50, value = 15),
+                          sliderInput("max",
+                                      "Maximum Number of Words:",
+                                      min = 1,  max = 300,  value = 100)
+                        ),
+                        
+                        # Show Word Cloud
+                        mainPanel(
+                          plotOutput("plot")
+                        )
+                      )
              )
+          )
         )
+      
   )
 

@@ -12,6 +12,7 @@ library(tidyverse)
 library(readr)
 library(tidytext)
 library(lubridate)
+library(wordcloud)
 
 polyrating <- read_csv(
   "https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv"
@@ -22,6 +23,11 @@ polyrating <- read_csv(
 token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv")
 
 data(stop_words)
+
+subjects <- polyrating %>%
+  distinct(subject) %>%
+  pull() %>%
+  unlist()
 
 review_words <- polyrating %>%
   unnest_tokens(word,review) %>%
@@ -34,8 +40,9 @@ total_words <- review_words %>%
 
 review_words <- left_join(review_words, total_words)
 
-
 shinyServer(function(input, output, session) {
+  
+  #--------------------------------FREQUENCY TAB--------------------------
   add_to_stop_r <- reactiveValues()
   
   delete_to_stop_r <- reactiveValues()
@@ -144,7 +151,7 @@ shinyServer(function(input, output, session) {
     }
   )
   
-  #------------------------------ NEW TAB -------------------------------
+  #------------------------------ WORD OVER TIME TAB -------------------------------
   
   updateSelectizeInput(session = session, inputId = 'timeword', choices = c(token_words), server = TRUE)
 
@@ -182,7 +189,7 @@ shinyServer(function(input, output, session) {
   
   output$timePlot <- renderPlot({timeplot()})
   
-  #-------------------------------- NEW TAB ------------------------------------
+  #-------------------------------- SENTIMENT TAB ------------------------------------
   
   subject_selected_sent <- reactive({
     req(input$sentimentsubj)
@@ -207,5 +214,59 @@ shinyServer(function(input, output, session) {
                 plot.margin = margin(.3, .8, .3, .8, "cm")) +
           xlab(element_blank()) + ylab("Sentiment")
     })
+  
+  #--------------------------WORDCLOUD TAB -------------------------------
+  getTermMatrix <- function(subj) {
+    
+    if (!(subj %in% subjects))
+      stop("Unknown Subject")
+    
+    vals <- cloud_use() %>%
+      filter(subject == subj) %>%
+      mutate(freq = n/total) %>%
+      unite(freq_n,c(freq,n),sep="::") %>%
+      select(subject,freq_n,word) %>%
+      spread(subject,freq_n) %>%
+      separate(subj,c("FREQ","N"),sep="::") %>%
+      drop_na() %>%
+      mutate(FREQ = as.numeric(FREQ))
+    
+    m = as.matrix(vals)
+    m
+  }
+  
+  cloud_words <- reactive({tokens() %>%
+    anti_join(stop_words) %>%
+    count(subject, word, sort = TRUE) %>%
+    ungroup()})
+  
+  cloud_total <- reactive({cloud_words() %>%
+    group_by(subject) %>%
+    summarize(total = sum(n))})
+  
+  cloud_use <- reactive({left_join(cloud_words(), cloud_total())})
+  
+  # Define a reactive expression for the document term matrix
+  terms <- eventReactive(
+    # Change when the "update" button is pressed...
+    input$update,
+    # ...but not for anything else
+    {
+      withProgress({
+        setProgress(message = "Processing corpus...")
+        as.tibble(getTermMatrix(input$selection)) %>%
+          mutate(FREQ = as.double(FREQ))
+      }
+      )
+    })
+  
+  # Make the wordcloud drawing predictable during a session
+  wordcloud_rep <- repeatable(wordcloud)
+  
+  output$plot <- renderPlot({
+    wordcloud_rep(terms()$word, terms()$FREQ, scale=c(4,0.5),
+                  min.freq = input$freq, max.words=input$max,
+                  colors=brewer.pal(8, "Dark2"))
+  })
   }
 )
