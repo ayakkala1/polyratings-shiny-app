@@ -177,6 +177,8 @@ shinyServer(function(input, output, session) {
   
   timeplot <- eventReactive(input$examine,
     {
+      withProgress({
+        setProgress(message = "Processing corpus...")
     year_vals() %>%
         filter(word %in% input$timeword) %>%
         ggplot(aes(date, n / year_total,fill = word, color = word)) +
@@ -185,6 +187,7 @@ shinyServer(function(input, output, session) {
         scale_y_continuous(labels = scales::percent_format()) +
         ylab("% frequency of word in review") +
         xlab(element_blank())
+      })
   })
   
   output$timePlot <- renderPlot({timeplot()})

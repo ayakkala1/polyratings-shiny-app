@@ -20,7 +20,7 @@ token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/
                 
 
 shinyUI(fluidPage(
-  
+  #theme = "mytheme.css",
   navbarPage("PolyRating",
              tabPanel("Term Frequencies",
                 sidebarLayout(
@@ -32,7 +32,8 @@ shinyUI(fluidPage(
                     hr(),
                     wellPanel(
                     checkboxGroupInput(inputId = "selected_type",
-                                       label = "Take out Stopwords?",
+                                       label = tags$a(href = "https://en.wikipedia.org/wiki/Stop_words",
+                                                                       "Take out Stopwords?"),
                                        choices = c("Yes"),
                                        selected = "Yes"),
                     textInput(inputId = "add_stop", 
@@ -52,7 +53,8 @@ shinyUI(fluidPage(
                     br(), br(),
                     actionButton("default","Default")),
                     wellPanel(checkboxGroupInput(inputId = "use_tf",
-                                                 label = "Use TF-IDF metric?",
+                                                 label = tags$a(href = "https://en.wikipedia.org/wiki/Tf%E2%80%93idf",
+                                                                     "Use TF-IDF metric?"),
                                                  choices = c("Yes"),
                                                  selected = NULL))
                   ,
@@ -106,6 +108,7 @@ shinyUI(fluidPage(
                       )
                      ),
              tabPanel("College Sentiment",
+              h4("Look at a subject's sentiment over time!"),
              sidebarLayout(
                sidebarPanel(
                  wellPanel(
@@ -137,7 +140,7 @@ shinyUI(fluidPage(
                         sidebarPanel(
                           selectInput("selection", "Choose a Department:",
                                       choices = subjects),
-                          actionButton("update", "Change"),
+                          actionButton("update", "Update Subject"),
                           hr(),
                           sliderInput("freq",
                                       "Minimum Frequency:",
