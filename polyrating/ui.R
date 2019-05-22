@@ -20,7 +20,7 @@ token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/
                 
 
 shinyUI(fluidPage(
-  #theme = "mytheme.css",
+  theme = "mytheme.css",
   navbarPage("PolyRating",
              tabPanel("Term Frequencies",
                 sidebarLayout(
