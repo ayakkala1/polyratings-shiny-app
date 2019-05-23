@@ -1,73 +1,37 @@
-#
-# This is the server logic of a Shiny web application. You can run the 
-# application by clicking 'Run App' above.
-#
-# Find out more about building applications with Shiny here:
-# 
-#    http://shiny.rstudio.com/
-#
-
-library(shiny)
-library(tidyverse)
-library(readr)
-library(tidytext)
-library(lubridate)
-library(wordcloud)
-
-polyrating <- read_csv(
-  "https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv"
-) %>% 
-  mutate(date = parse_date_time(date,"%m%y")) %>%
-  drop_na()
-
-token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv")
-
-data(stop_words)
-
-subjects <- polyrating %>%
-  distinct(subject) %>%
-  pull() %>%
-  unlist()
-
-review_words <- polyrating %>%
-  unnest_tokens(word,review) %>%
-  count(subject, word, sort = TRUE) %>%
-  ungroup()
-
-total_words <- review_words %>%
-  group_by(subject) %>%
-  summarize(total = sum(n))
-
-review_words <- left_join(review_words, total_words)
-
 shinyServer(function(input, output, session) {
   
   #--------------------------------FREQUENCY TAB--------------------------
-  add_to_stop_r <- reactiveValues()
+  add_to_stop_r <- reactiveValues(words = c())
   
   delete_to_stop_r <- reactiveValues()
-  
-  observe({
-    if(input$add > 0){
+
+  showNotification("Note: Currently the app only utilizes 30% of the data in order to be hosted for free.", duration = NULL, type = "message")
+
+  observeEvent(
+    input$add, {
       add_to_stop_r$dList <- c(isolate(add_to_stop_r$dList), isolate(input$add_stop))
-    }
+    
   })
   
-  observe({
-    if(input$delete_butt > 0){
-      delete_to_stop_r$dList <- c(isolate(delete_to_stop_r$dList), isolate(input$delete))
-    }
+  observeEvent(input$delete_butt,{
+      delete_to_stop_r$words <- c(isolate(delete_to_stop_r$words), isolate(input$delete))
+      add_to_stop_r$dList <-  add_to_stop_r$dList[!add_to_stop_r$dList %in% delete_to_stop_r$dList ]
+    
   })
   
-  observe({
-    if(input$default > 0){
-      add_to_stop_r$dList <- reactiveValues()
-      delete_to_stop_r$dList <- reactiveValues()
-    }
+  observeEvent(
+    input$default,{
+      add_to_stop_r$dList <- list()
+      delete_to_stop_r$words <- c()
+    
   })
 
-  stop_words_new <- reactive({stop_words %>%
-                          filter(!word %in% delete_to_stop_r$dList)})
+  stop_words_new <- reactive(
+                    { 
+                    stop_words %>%
+                          filter(!word %in% delete_to_stop_r$words)
+                    }
+                            )
   
   
   tokens <- reactive({
@@ -159,13 +123,14 @@ shinyServer(function(input, output, session) {
   year_counts <- reactive({
     req(input$timesubject)
     if ("ALL" %in% input$timesubject){tokens() %>%
-        count(date,word) %>%
-        complete(date, word, fill = list(n = 0))
+        count(date,word) #%>%
+        #complete(date, word, fill = list(n = 0))
     }else{
       tokens() %>%
         filter(subject %in% input$timesubject) %>%
-        count(date,word) %>%
-        complete(date, word, fill = list(n = 0))}
+        count(date,word) #%>%
+        #complete(date, word, fill = list(n = 0))
+      }
   })
   
   year_totals <- reactive({year_counts() %>%
@@ -212,7 +177,7 @@ shinyServer(function(input, output, session) {
           spread(sentiment, n, fill = 0) %>%
           mutate(sentiment = positive - negative) %>%
           ggplot(aes(date, sentiment,fill = subject)) + geom_col(show.legend = FALSE) +
-          facet_wrap(~subject) + ggtitle("College Sentiment Over Time") + 
+          facet_wrap(~subject, scales = "free_y") + ggtitle("College Sentiment Over Time") + 
           theme(panel.spacing.x = unit(1, "lines"), 
                 plot.margin = margin(.3, .8, .3, .8, "cm")) +
           xlab(element_blank()) + ylab("Sentiment")

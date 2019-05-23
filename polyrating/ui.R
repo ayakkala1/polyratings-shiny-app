@@ -1,24 +1,3 @@
-library(shiny)
-library(tidyverse)
-library(readr)
-library(tidytext)
-library(lubridate)
-
-polyrating <- read_csv(
-  "https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/polyrating.csv"
-) %>% 
-  mutate(date = parse_date_time(date,"%m%y")) %>%
-  drop_na()
-
-subjects <- polyrating %>%
-            distinct(subject) %>%
-            pull() %>%
-            unlist()
-
-token_words <- read_csv("https://raw.githubusercontent.com/ayakkala1/stat_final/master/vignettes/unique_poly.csv") #%>%
- 
-                
-
 shinyUI(fluidPage(
   theme = "mytheme.css",
   navbarPage("PolyRating",
@@ -27,7 +6,7 @@ shinyUI(fluidPage(
                   sidebarPanel(
                     selectizeInput(
                       'subject', label = "Subject: ", choices = c("ALL",subjects),
-                      options = list(maxItems  = 100), selected = "ALL"
+                      options = list(maxItems  = 1), selected = "ALL"
                     ),
                     hr(),
                     wellPanel(
